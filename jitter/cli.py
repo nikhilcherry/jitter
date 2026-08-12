@@ -214,7 +214,10 @@ def render(record, style, out=None):
     say()
 
     verdicts = record.get("verdicts") or []
-    interesting = [v for v in verdicts if v["role"] != "untested"]
+    # A knob with nothing to say about it is noise in a list of twelve. The
+    # HTML report keeps every row; here they collapse to a single line.
+    interesting = [v for v in verdicts if v["role"] not in ("untested", "cleared")]
+    cleared = [v["knob"] for v in verdicts if v["role"] == "cleared"]
     if interesting:
         say(rule("what matters", style))
         say(
@@ -242,6 +245,14 @@ def render(record, style, out=None):
                     reportmod.fraction(entry["loo_fail"], entry["loo_n"]),
                     reportmod.pvalue(best) if (entry["solo_n"] or entry["loo_n"]) else "",
                     tint("prime cause" if role == "prime" else role),
+                )
+            )
+        if cleared:
+            say(
+                style.grey(
+                    "  {0:<10} {1}".format(
+                        "cleared", truncate(", ".join(cleared), width() - 14)
+                    )
                 )
             )
         say()

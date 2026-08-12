@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="742" height="212" viewBox="0 0 742 212" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13">
+<rect width="742" height="212" rx="9" fill="#0d1017"/>
+<path d="M0 9a9 9 0 0 1 9-9h724a9 9 0 0 1 9 9v22H0z" fill="#141922"/>
+<circle cx="20" cy="16" r="5.5" fill="#ff5f57"/>
+<circle cx="37" cy="16" r="5.5" fill="#febc2e"/>
+<circle cx="54" cy="16" r="5.5" fill="#28c840"/>
+<text x="371" y="20" fill="#616d80" font-size="11.5" text-anchor="middle">jitter freeze -- pytest examples/flaky/test_flaky.py</text>
+<text x="18.0" y="56.0" fill="#7f8896" xml:space="preserve">── frozen world ────────────────────────────────────────────────────────────────────</text>
+<text x="18.0" y="75.0" fill="#e6ebf2" xml:space="preserve">    1/5  </text>
+<text x="93.6" y="75.0" fill="#4fbe73" xml:space="preserve">pass</text>
+<text x="144.0" y="75.0" fill="#7f8896" xml:space="preserve">960 ms</text>
+<text x="18.0" y="94.0" fill="#e6ebf2" xml:space="preserve">    2/5  </text>
+<text x="93.6" y="94.0" fill="#4fbe73" xml:space="preserve">pass</text>
+<text x="144.0" y="94.0" fill="#7f8896" xml:space="preserve">947 ms</text>
+<text x="18.0" y="113.0" fill="#e6ebf2" xml:space="preserve">    3/5  </text>
+<text x="93.6" y="113.0" fill="#4fbe73" xml:space="preserve">pass</text>
+<text x="144.0" y="113.0" fill="#7f8896" xml:space="preserve">962 ms</text>
+<text x="18.0" y="132.0" fill="#e6ebf2" xml:space="preserve">    4/5  </text>
+<text x="93.6" y="132.0" fill="#4fbe73" xml:space="preserve">pass</text>
+<text x="144.0" y="132.0" fill="#7f8896" xml:space="preserve">959 ms</text>
+<text x="18.0" y="151.0" fill="#e6ebf2" xml:space="preserve">    5/5  </text>
+<text x="93.6" y="151.0" fill="#4fbe73" xml:space="preserve">pass</text>
+<text x="144.0" y="151.0" fill="#7f8896" xml:space="preserve">961 ms</text>
+<text x="34.8" y="189.0" fill="#4fbe73" xml:space="preserve">stable: 5 runs, no failures.</text>
+</svg>
