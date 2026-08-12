@@ -1,0 +1,58 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install pytest
+      - run: pip install -e .
+      - run: pytest -q
+
+  dogfood:
+    # jitter's whole claim is that it names the right knob. Prove it in CI
+    # against a test whose cause is known, and fail the build when it is wrong.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install pytest && pip install -e .
+
+      - name: the frozen world makes ten flaky tests deterministic
+        run: jitter freeze -n 5 --no-color -- python -m pytest examples/flaky/test_flaky.py -q
+
+      - name: jitter blames test ordering, and nothing else
+        run: |
+          jitter run -n 10 --screen 5 --seed 3 --name state --no-color -- \
+            python -m pytest examples/flaky/test_flaky.py -k state -q
+          jitter show state --json > study.json
+          python - <<'PY'
+          import json
+          study = json.load(open("study.json"))
+          minimal = study["minimal"]
+          assert minimal["shaken"] == ["order"], minimal["shaken"]
+          assert minimal["failures"] == minimal["trials"], minimal
+          guilty = [v["knob"] for v in study["verdicts"]
+                    if v["role"] in ("confirmed", "prime", "cause", "required")]
+          assert guilty == ["order"], guilty
+          print("jitter correctly blamed:", guilty)
+          PY
+
+      - name: the repro script it wrote actually reproduces
+        run: |
+          jitter repro state -o bug.sh
+          ! ./bug.sh
