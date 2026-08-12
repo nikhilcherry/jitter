@@ -98,23 +98,36 @@ def test_clock_daily_cache_has_a_sane_ttl():
     assert ttl > 60, "daily cache would expire in {0:.0f}s".format(ttl)
 
 
-# -- threads: read-modify-write without a lock ------------------------------
+# -- threads: check-then-act on a lazy singleton -----------------------------
 
 
-def test_threads_counter_does_not_lose_updates():
-    state = {"n": 0}
+def test_threads_cache_entry_is_built_once():
+    ROUNDS = 10
+    cache, builds = {}, []
+    gate = threading.Barrier(2)  # both workers enter each round together
 
-    def bump():
-        for _ in range(20000):
-            value = state["n"]
-            state["n"] = value + 1
+    def worker():
+        for key in range(ROUNDS):
+            gate.wait()
+            # The bug: no lock between the check and the act. The gap is only
+            # as wide as the work inside it -- about forty microseconds -- so
+            # at the default 5ms switch interval it is almost never preempted,
+            # and at a microsecond interval it always is.
+            if key not in cache:
+                total = 0
+                for value in range(2000):
+                    total += value
+                builds.append(key)
+                cache[key] = total
 
-    workers = [threading.Thread(target=bump) for _ in range(2)]
-    for worker in workers:
-        worker.start()
-    for worker in workers:
-        worker.join()
-    assert state["n"] == 40000
+    workers = [threading.Thread(target=worker) for _ in range(2)]
+    for thread in workers:
+        thread.start()
+    for thread in workers:
+        thread.join()
+    assert len(builds) == ROUNDS, "built {0} times, wanted {1}".format(
+        len(builds), ROUNDS
+    )
 
 
 # -- sleep: a sleep standing in for synchronisation -------------------------

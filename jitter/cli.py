@@ -647,7 +647,16 @@ def build_parser():
     parser.add_argument("--version", action="version", version="jitter " + __version__)
     parser.add_argument("--root", default=".", help="where .jitter lives")
     parser.add_argument("--no-color", action="store_true")
-    subs = parser.add_subparsers(dest="command")
+
+    # `jitter --no-color run` and `jitter run --no-color` are both things a
+    # person will type, and being told off for the second one is a silly way to
+    # meet a tool. Accept either: the sub-level flags land on their own dests
+    # and get merged in main(), so a flag set before the subcommand is not
+    # clobbered by the subcommand's default.
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--no-color", action="store_true", dest="sub_no_color")
+    common.add_argument("--root", dest="sub_root", default=None)
+    subs = parser.add_subparsers(dest="command", parser_class=argparse.ArgumentParser)
 
     def shared(sub):
         sub.add_argument("--knob", action="append", default=[], metavar="NAME")
@@ -660,7 +669,7 @@ def build_parser():
             help="also count a run as failed when its output matches",
         )
 
-    run = subs.add_parser("run", help="find out what makes it flaky")
+    run = subs.add_parser("run", help="find out what makes it flaky", parents=[common])
     shared(run)
     run.add_argument("-n", "--trials", type=int, default=DEFAULT_TRIALS)
     run.add_argument("--screen", type=int, default=DEFAULT_SCREEN)
@@ -675,29 +684,29 @@ def build_parser():
     run.add_argument("-q", "--quiet", action="store_true")
     run.add_argument("--report", metavar="FILE")
 
-    freeze = subs.add_parser("freeze", help="run it with every knob pinned")
+    freeze = subs.add_parser("freeze", help="run it with every knob pinned", parents=[common])
     shared(freeze)
     freeze.add_argument("-n", "--trials", type=int, default=5)
 
-    replay = subs.add_parser("replay", help="run the stored failing configuration")
+    replay = subs.add_parser("replay", help="run the stored failing configuration", parents=[common])
     replay.add_argument("study", nargs="?")
     replay.add_argument("-n", "--trials", type=int, default=5)
     replay.add_argument("--show-output", action="store_true")
 
-    repro = subs.add_parser("repro", help="print a standalone repro script")
+    repro = subs.add_parser("repro", help="print a standalone repro script", parents=[common])
     repro.add_argument("study", nargs="?")
     repro.add_argument("-o", "--output", metavar="FILE")
 
-    show = subs.add_parser("show", help="reprint a study")
+    show = subs.add_parser("show", help="reprint a study", parents=[common])
     show.add_argument("study", nargs="?")
     show.add_argument("--json", action="store_true")
 
-    subs.add_parser("list", help="every study recorded here")
+    subs.add_parser("list", help="every study recorded here", parents=[common])
 
-    knobs = subs.add_parser("knobs", help="what jitter can shake")
+    knobs = subs.add_parser("knobs", help="what jitter can shake", parents=[common])
     knobs.add_argument("-v", "--verbose", action="store_true")
 
-    html = subs.add_parser("report", help="write a self-contained HTML report")
+    html = subs.add_parser("report", help="write a self-contained HTML report", parents=[common])
     html.add_argument("study", nargs="?")
     html.add_argument("-o", "--output", metavar="FILE")
     html.add_argument("--open", action="store_true")
@@ -731,6 +740,8 @@ def main(argv=None):
         parser.print_help()
         return 0
 
+    args.no_color = args.no_color or getattr(args, "sub_no_color", False)
+    args.root = getattr(args, "sub_root", None) or args.root
     style = Style(colour_enabled(args.no_color))
     if getattr(args, "jobs", None) == 0:
         args.jobs = max(1, min(4, (os.cpu_count() or 2) // 2))
