@@ -26,15 +26,25 @@ def _chain():
     difference on entropy.
     """
     here = os.path.dirname(os.path.abspath(__file__))
-    saved = sys.path[:]
+    saved_path = sys.path[:]
+    ours = sys.modules.get("sitecustomize")
     try:
         sys.path[:] = [p for p in sys.path if os.path.abspath(p or ".") != here]
-        del sys.modules["sitecustomize"]
+        sys.modules.pop("sitecustomize", None)
         import sitecustomize  # noqa: F401
     except Exception:
         pass
     finally:
-        sys.path[:] = saved
+        sys.path[:] = saved_path
+        # Put our own module back where the import machinery expects it.
+        # CPython's loader ends with `sys.modules.pop(name)` once this body
+        # returns, so leaving the key deleted raises KeyError -- which site.py
+        # catches and prints as "Error in sitecustomize" on stderr, polluting
+        # the output of every trial. It only shows up on machines that have no
+        # other sitecustomize to chain to, which is why CI found it and no
+        # laptop did.
+        if ours is not None:
+            sys.modules["sitecustomize"] = ours
 
 
 _chain()
