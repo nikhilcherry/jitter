@@ -416,7 +416,7 @@ def cmd_run(args, command, style):
         )
         # Minimisation is an ablation, so it outranks the screen. Fold its
         # result in before anything is written down or printed.
-        confirm(verdicts, minimal)
+        confirm(verdicts, minimal, study.freeze)
     finally:
         progress.finish()
         runner.close()

@@ -13,6 +13,7 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from jitter import knobs, report, runner, stats  # noqa: E402
+from jitter.attribute import Verdict, confirm  # noqa: E402
 from jitter.minimize import _split  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -205,6 +206,75 @@ class ShimTests(unittest.TestCase):
     def test_a_broken_knob_never_breaks_the_program(self):
         out = self._run("print('alive')", JITTER_GC="not,a,number", JITTER_SLEEP="huh")
         self.assertEqual(out, "alive")
+
+
+class _FakeCell:
+    """Just the three numbers ``confirm`` reads off the freeze cell."""
+
+    def __init__(self, failures, n):
+        self.failures = failures
+        self.n = n
+
+    @property
+    def rate(self):
+        return self.failures / self.n if self.n else 0.0
+
+
+def _verdicts(*names):
+    out = []
+    for name in names:
+        verdict = Verdict(name)
+        verdict.role = "suspect"
+        out.append(verdict)
+    return out
+
+
+class ConfirmTests(unittest.TestCase):
+    """The strongest verdict has to be backed by a repro that reproduces."""
+
+    def test_a_repro_that_barely_fails_does_not_confirm_anything(self):
+        """Minimisation accepts a subset on one failing probe.
+
+        Against a test that fails for a reason jitter cannot shake -- an
+        unseeded random.random(), say -- it converges on an arbitrary knob and
+        then "verifies" it at the background flake rate. Two failures in ten
+        replays, against a freeze cell already failing three in twelve, is not
+        evidence: the configuration explains nothing that pinning everything
+        would not have produced anyway.
+        """
+        verdicts = _verdicts("fsorder", "clock")
+        minimal = {"shaken": ["fsorder"], "failures": 2, "trials": 10}
+
+        confirm(verdicts, minimal, _FakeCell(failures=3, n=12))
+
+        self.assertEqual([v.role for v in verdicts], ["suspect", "suspect"])
+
+    def test_a_repro_that_always_fails_confirms(self):
+        verdicts = _verdicts("fsorder", "clock")
+        minimal = {"shaken": ["fsorder"], "failures": 10, "trials": 10}
+
+        confirm(verdicts, minimal, _FakeCell(failures=3, n=12))
+
+        roles = {v.knob: v.role for v in verdicts}
+        self.assertEqual(roles["fsorder"], "confirmed")
+        self.assertEqual(roles["clock"], "suspect")
+
+    def test_a_repro_confirms_against_a_clean_freeze_cell(self):
+        """Half the replays failing is plenty when freezing never fails."""
+        verdicts = _verdicts("hashseed")
+        minimal = {"shaken": ["hashseed"], "failures": 5, "trials": 10}
+
+        confirm(verdicts, minimal, _FakeCell(failures=0, n=12))
+
+        self.assertEqual(verdicts[0].role, "confirmed")
+
+    def test_no_freeze_cell_keeps_the_old_behaviour(self):
+        verdicts = _verdicts("tz")
+        minimal = {"shaken": ["tz"], "failures": 1, "trials": 10}
+
+        confirm(verdicts, minimal, None)
+
+        self.assertEqual(verdicts[0].role, "confirmed")
 
 
 class ReportTests(unittest.TestCase):

@@ -175,7 +175,7 @@ def judge(study, alpha: float = 0.05):
     return verdicts
 
 
-def confirm(verdicts, minimal):
+def confirm(verdicts, minimal, freeze=None, alpha: float = 0.05):
     """Promote every knob the minimal repro proved by taking it away.
 
     This is stronger evidence than the statistical screen, not weaker. The
@@ -183,9 +183,33 @@ def confirm(verdicts, minimal):
     chance; minimisation removed the knob and watched the failure disappear,
     then put it back and watched it return. When the two disagree it is
     because the screen ran out of trials, so the ablation wins.
+
+    That only holds while the repro actually reproduces. Minimisation accepts a
+    subset on a single failing probe, so against a test that fails for a reason
+    jitter cannot shake it converges on an arbitrary subset and then "verifies"
+    it at the background flake rate. Requiring only one failure out of ten
+    replays promoted that arbitrary knob to the strongest verdict available,
+    overriding a screen that had put it at p = 0.2 -- and the headline went on
+    to blame it by name.
+
+    So the repro has to beat the freeze cell on the same one-sided test the
+    screen uses. A configuration that fails no more often than pinning
+    everything has explained nothing, whatever minimisation settled on.
     """
     if not minimal or not minimal.get("failures"):
         return verdicts
+    if freeze is not None and freeze.n:
+        trials = minimal.get("trials") or 0
+        failures = minimal.get("failures") or 0
+        if trials:
+            p = fisher_greater(
+                failures,
+                trials - failures,
+                freeze.failures,
+                freeze.n - freeze.failures,
+            )
+            if p > alpha:
+                return verdicts
     inside = set(minimal.get("shaken") or ())
     for verdict in verdicts:
         if verdict.knob in inside:
