@@ -125,6 +125,11 @@ jitter run -- pytest examples/flaky/test_flaky.py -k tz        # blames tz
 
 CI asserts this on every push: if jitter names the wrong knob, the build fails.
 
+A real run on the `tz` example (abridged: the pytest traceback is trimmed). jitter blames one knob out of twelve, shows the failure rate going from 0% to 50%, and hands back a configuration that fails 10 of 10 replays:
+
+![jitter run on the tz example: caused by tz, 0 of 12 frozen trials failed vs 6 of 12 shaken, repro Pacific/Kiritimati verified 10 of 10](docs/images/run-tz.png)
+
+
 ## Any language, honestly labelled
 
 Eight of the knobs are environment variables and process behaviour, so they
