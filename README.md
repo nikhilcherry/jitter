@@ -19,6 +19,10 @@ You rerun the test. It passes. You add a `sleep`. It passes for a month. Then it
 |:---:|:---:|:---:|:---:|
 | knobs shaken: order, hash seed, timezone, clock, threads and more | dependencies, and none coming | verified replays of the minimal repro | to blame a timezone flake (263 runs) |
 
+## 40-second demo
+
+<p align="center"><a href="docs/media/demo.mp4"><img src="docs/media/demo.gif" width="640" alt="Preview of the jitter demo video: the brand slam, the twelve knobs, and one knob blamed for a flake"></a><br><sub>▶ Click for the full 40-second video with sound. Every image in it is a real screenshot or run from this repo.</sub></p>
+
 ## Try it
 
 ```bash
