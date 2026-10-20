@@ -21,7 +21,7 @@ You rerun the test. It passes. You add a `sleep`. It passes for a month. Then it
 
 ## 40-second demo
 
-<p align="center"><a href="docs/media/demo.mp4"><img src="docs/media/demo.gif" width="640" alt="Preview of the jitter demo video: the brand slam, the twelve knobs, and one knob blamed for a flake"></a><br><sub>▶ Click for the full 40-second video with sound. Every image in it is a real screenshot or run from this repo.</sub></p>
+<p align="center"><a href="https://youtu.be/BsvzVi-R1Xg"><img src="docs/media/demo.gif" width="640" alt="Preview of the jitter demo video: the brand slam, the twelve knobs, and one knob blamed for a flake"></a><br><sub>▶ Watch the 40-second demo on [YouTube](https://youtu.be/BsvzVi-R1Xg) (with sound), or grab the [mp4](docs/media/demo.mp4). Every image in it is a real screenshot or run from this repo.</sub></p>
 
 ## Try it
 
